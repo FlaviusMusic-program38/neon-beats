@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080b10">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEON BEATS — Music Player</title>
+<style>
+:root{--bg:#080b10;--panel:#111720;--panel2:#171f2b;--text:#f4f7fb;--muted:#98a6b8;--neon:#40f5b5;--blue:#65a8ff;--line:#263242}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 70% -20%,#17352f 0,transparent 42%),var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+button,input{font:inherit}button{cursor:pointer;border:0;color:inherit}button:focus-visible,input:focus-visible{outline:2px solid var(--neon);outline-offset:3px}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh;padding-bottom:105px}
+aside{padding:26px 18px;background:#0b1017;border-right:1px solid var(--line)}.brand{display:flex;gap:10px;align-items:center;font-weight:900;letter-spacing:1px;font-size:18px;margin:0 0 34px}.logo{width:35px;height:35px;border-radius:12px;background:linear-gradient(135deg,var(--neon),#36a6ff);display:grid;place-items:center;color:#07110f;font-size:20px;box-shadow:0 0 24px #40f5b533}
+.navlabel{font-size:11px;color:var(--muted);letter-spacing:1.8px;margin:22px 10px 9px}.nav{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px 11px;border-radius:10px;background:transparent;color:var(--muted);margin:3px 0}.nav.active,.nav:hover{background:#17242a;color:var(--neon)}.tip{margin-top:35px;padding:14px;border:1px solid var(--line);border-radius:14px;color:var(--muted);font-size:12px}
+main{padding:28px clamp(18px,4vw,48px);max-width:1500px;width:100%;margin:auto}.topbar{display:flex;gap:14px;align-items:center;justify-content:space-between;margin-bottom:27px}.search{width:min(440px,100%);background:#121923;border:1px solid var(--line);border-radius:999px;padding:12px 17px;color:var(--text)}.pill{border:1px solid #2d554b;color:var(--neon);border-radius:999px;padding:8px 12px;font-size:12px;white-space:nowrap}
+.hero{border:1px solid #245447;background:linear-gradient(110deg,#122b28,#131b29 68%,#1c2440);border-radius:22px;padding:clamp(22px,4vw,40px);display:flex;justify-content:space-between;align-items:center;gap:20px;overflow:hidden;position:relative}.eyebrow{color:var(--neon);font-size:11px;letter-spacing:2px;font-weight:800}.hero h1{font-size:clamp(30px,4vw,48px);line-height:1.05;margin:12px 0}.hero p{color:#b5c5d1;max-width:510px;margin:0 0 20px}.hero-art{font-size:clamp(68px,10vw,125px);filter:drop-shadow(0 0 30px #40f5b566);padding:0 20px}.primary{background:var(--neon);color:#06130f;font-weight:800;border-radius:999px;padding:12px 18px}.secondary{background:#202b38;border:1px solid #334253;border-radius:999px;padding:11px 16px}.sectionhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:30px 0 14px}.sectionhead h2{font-size:20px;margin:0}.muted{color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:9px}.tracklist{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px 14px}.track{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #202a36}.track:last-child{border-bottom:0}.cover{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#1e5649,#25395e);font-size:19px}.trackname{font-weight:650;overflow-wrap:anywhere}.tracksub{font-size:12px;color:var(--muted)}.track button{background:#202b38;border-radius:50%;width:36px;height:36px}.empty{padding:26px;text-align:center;color:var(--muted)}.sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.source{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:16px}.source h3{margin:0 0 7px}.source p{color:var(--muted);font-size:13px;min-height:40px}.source a{color:var(--neon);text-decoration:none;font-weight:700}.source a:hover{text-decoration:underline}.notice{font-size:12px;color:var(--muted);margin-top:12px}
+.player{position:fixed;bottom:0;left:0;right:0;min-height:90px;background:#0d131bed;backdrop-filter:blur(18px);border-top:1px solid var(--line);display:grid;grid-template-columns:minmax(150px,1fr) minmax(220px,1.2fr) minmax(100px,1fr);gap:20px;align-items:center;padding:14px 25px;z-index:5}.now{display:flex;gap:12px;align-items:center;min-width:0}.nowtext{min-width:0}.nowtext strong,.nowtext span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nowtext span{font-size:12px;color:var(--muted)}.controls{text-align:center}.controlbuttons{display:flex;justify-content:center;align-items:center;gap:15px}.playbig{background:var(--neon);color:#07110f;width:42px;height:42px;border-radius:50%;font-size:18px;font-weight:900}.smallcontrol{background:transparent;font-size:19px;color:#d7e1ec}.progressrow{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px;margin-top:7px}.progress{width:100%;accent-color:var(--neon);cursor:pointer}.volume{display:flex;justify-content:flex-end;align-items:center;gap:9px}.volume input{width:95px;accent-color:var(--neon)}.hidden{display:none!important}
+@media(max-width:760px){.app{grid-template-columns:1fr}aside{padding:12px 15px;border-right:0;border-bottom:1px solid var(--line)}.brand{margin:0}.navs{display:flex;gap:4px;overflow:auto;margin-top:12px}.nav{white-space:nowrap;width:auto;margin:0;padding:9px}.navlabel,.tip{display:none}main{padding:20px 15px}.hero-art{display:none}.sources{grid-template-columns:1fr}.player{grid-template-columns:1fr auto;gap:8px;padding:10px 14px}.controls{grid-column:1/3;grid-row:2}.now{grid-column:1}.volume{grid-column:2;grid-row:1}.volume input{width:65px}.app{padding-bottom:145px}.topbar{align-items:stretch;flex-direction:column}.pill{align-self:flex-start}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand"><div class="logo">♫</div> NEON BEATS</div>
+  <div class="navlabel">MENIU</div>
+  <div class="navs">
+    <button class="nav active" data-view="library">▦ Biblioteca mea</button>
+    <button class="nav" data-view="sources">◎ Muzică gratuită</button>
+  </div>
+  <div class="navlabel">COLECȚIA TA</div>
+  <button class="nav" id="addSide">＋ Adaugă melodii</button>
+  <div class="tip">♪ Muzica ta, stilul tău.<br><br>Fișierele tale sunt citite local în browser. Nu sunt încărcate pe un server.</div>
+</aside>
+<main>
+  <div class="topbar"><input id="search" class="search" placeholder="⌕  Caută în biblioteca ta..." aria-label="Caută melodii"><span class="pill">● PLAYER GRATUIT</span></div>
+  <section id="libraryView">
+    <div class="hero">
+      <div><div class="eyebrow">PLAYERUL TĂU PERSONAL</div><h1>Sunetul tău.<br>Regulile tale.</h1><p>Ascultă colecția ta de muzică într-un spațiu întunecat, modern și cu accente neon.</p><div class="actions"><button class="primary" id="chooseFiles">＋ Adaugă muzică</button><button class="secondary" id="playAll">▶ Redă prima piesă</button></div></div>
+      <div class="hero-art" aria-hidden="true">♫</div>
+    </div>
+    <div class="sectionhead"><h2>Biblioteca ta</h2><span class="muted" id="count">0 melodii</span></div>
+    <div class="tracklist" id="tracks"><div class="empty">Biblioteca este goală.<br>Alege „Adaugă muzică” și selectează fișiere audio de pe Chromebook.</div></div>
+    <div class="notice">Formate uzuale: MP3, WAV, OGG, M4A și FLAC (în funcție de suportul browserului). Reîncarcă fișierele după închiderea paginii.</div>
+  </section>
+  <section id="sourcesView" class="hidden">
+    <div class="hero"><div><div class="eyebrow">DESCOPERĂ MUZICĂ</div><h1>Ritmuri noi.<br>Fără costuri.</h1><p>Deschide surse de muzică și descarcă doar piesele pentru care autorul permite descărcarea.</p></div><div class="hero-art">♫</div></div>
+    <div class="sectionhead"><h2>Surse de muzică</h2></div>
+    <div class="sources">
+      <article class="source"><h3>Jamendo Music</h3><p>Muzică independentă cu licențe Creative Commons; verifică termenii fiecărei piese.</p><a href="https://www.jamendo.com/" target="_blank" rel="noopener">Deschide Jamendo ↗</a></article>
+      <article class="source"><h3>Internet Archive — Audio</h3><p>Înregistrări și colecții audio. Nu toate fișierele sunt descărcabile; verifică pagina fiecărui element.</p><a href="https://archive.org/details/audio" target="_blank" rel="noopener">Răsfoiește audio ↗</a></article>
+      <article class="source"><h3>Free Music Archive</h3><p>Explorează muzică independentă și verifică licența indicată pentru fiecare înregistrare.</p><a href="https://freemusicarchive.org/" target="_blank" rel="noopener">Deschide FMA ↗</a></article>
+      <article class="source"><h3>Wikimedia Commons</h3><p>Fișiere audio cu informații despre licență și atribuire pe pagina fiecărui fișier.</p><a href="https://commons.wikimedia.org/wiki/Category:Audio_files" target="_blank" rel="noopener">Răsfoiește fișiere ↗</a></article>
+    </div>
+    <p class="notice">Acestea sunt linkuri către surse externe, nu un motor de căutare integrat. Descărcarea și utilizarea depind de licența fiecărei piese.</p>
+  </section>
+  <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac" multiple class="hidden">
+</main>
+</div>
+<footer class="player">
+  <div class="now"><div class="cover">♫</div><div class="nowtext"><strong id="nowTitle">Nicio melodie selectată</strong><span id="nowSub">Adaugă fișiere pentru a începe</span></div></div>
+  <div class="controls"><div class="controlbuttons"><button class="smallcontrol" id="prev" title="Piesa anterioară">|◀</button><button class="playbig" id="toggle" title="Redare/Pauză">▶</button><button class="smallcontrol" id="next" title="Piesa următoare">▶|</button></div><div class="progressrow"><span id="elapsed">0:00</span><input class="progress" id="seek" type="range" min="0" max="100" value="0" aria-label="Poziția melodiei"><span id="duration">0:00</span></div></div>
+  <div class="volume"><span>🔊</span><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volum"></div>
+</footer>
+<audio id="audio"></audio>
+<script>
+const $=id=>document.getElementById(id);
+const audio=$('audio'); let tracks=[]; let current=-1; let objectUrls=[];
+const fmt=s=>{if(!Number.isFinite(s))return'0:00';let m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+String(sec).padStart(2,'0')};
+function render(){
+ const q=$('search').value.trim().toLowerCase();
+ const shown=tracks.map((t,i)=>({...t,i})).filter(t=>t.name.toLowerCase().includes(q));
+ $('count').textContent=tracks.length+' melodii';
+ if(!shown.length){$('tracks').innerHTML='<div class="empty">'+(tracks.length?'Nu am găsit melodii pentru această căutare.':'Biblioteca este goală.<br>Alege „Adaugă muzică” și selectează fișiere audio de pe Chromebook.')+'</div>';return}
+ $('tracks').innerHTML=shown.map(t=>`<div class="track"><div class="cover">♫</div><div><div class="trackname">${escapeHtml(t.name)}</div><div class="tracksub">${t.i===current?'În player': 'Fișier local'} · ${escapeHtml(t.size)}</div></div><button title="Redă ${escapeHtml(t.name)}" data-play="${t.i}">${t.i===current&&!audio.paused?'Ⅱ':'▶'}</button></div>`).join('');
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addFiles(files){for(const file of files){if(!file.type.startsWith('audio/')&&!/\.(mp3|wav|ogg|m4a|flac|aac|opus)$/i.test(file.name))continue;const url=URL.createObjectURL(file);objectUrls.push(url);tracks.push({name:file.name.replace(/\.[^.]+$/,''),url,size:file.size<1048576?(file.size/1024).toFixed(0)+' KB':(file.size/1048576).toFixed(1)+' MB'});}render();if(current<0&&tracks.length)selectTrack(0,false)}
+function selectTrack(i,autoplay=true){if(i<0||i>=tracks.length)return;current=i;audio.src=tracks[i].url;$('nowTitle').textContent=tracks[i].name;$('nowSub').textContent='Din biblioteca ta';$('toggle').textContent='▶';$('seek').value=0;$('elapsed').textContent='0:00';$('duration').textContent='0:00';render();if(autoplay)audio.play().then(updatePlayButton).catch(()=>updatePlayButton())}
+function updatePlayButton(){$('toggle').textContent=audio.paused?'▶':'Ⅱ';render()}
+function nextTrack(step){if(!tracks.length)return;let i=current<0?0:(current+step+tracks.length)%tracks.length;selectTrack(i,true)}
+$('chooseFiles').onclick=$('addSide').onclick=()=>$('fileInput').click();
+$('fileInput').addEventListener('change',e=>{addFiles([...e.target.files]);e.target.value=''});
+$('tracks').addEventListener('click',e=>{const b=e.target.closest('[data-play]');if(b){const i=Number(b.dataset.play);if(i===current){if(audio.paused)audio.play().then(updatePlayButton);else audio.pause();updatePlayButton()}else selectTrack(i,true)}});
+$('playAll').onclick=()=>{if(tracks.length)selectTrack(current<0?0:current,true);else $('fileInput').click()};
+$('toggle').onclick=()=>{if(current<0){if(tracks.length)selectTrack(0,true);else $('fileInput').click();return}if(audio.paused)audio.play().then(updatePlayButton);else audio.pause();updatePlayButton()};
+$('prev').onclick=()=>{if(audio.currentTime>3)audio.currentTime=0;else nextTrack(-1)};
+$('next').onclick=()=>nextTrack(1);
+audio.addEventListener('play',updatePlayButton);audio.addEventListener('pause',updatePlayButton);
+audio.addEventListener('loadedmetadata',()=>{$('duration').textContent=fmt(audio.duration)});
+audio.addEventListener('timeupdate',()=>{if(audio.duration){$('seek').value=audio.currentTime/audio.duration*100;$('elapsed').textContent=fmt(audio.currentTime)}});
+audio.addEventListener('ended',()=>nextTrack(1));
+$('seek').addEventListener('input',()=>{if(audio.duration)audio.currentTime=Number($('seek').value)/100*audio.duration});
+$('volume').addEventListener('input',()=>audio.volume=Number($('volume').value));audio.volume=.8;
+$('search').addEventListener('input',render);
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n===b));const lib=b.dataset.view==='library';$('libraryView').classList.toggle('hidden',!lib);$('sourcesView').classList.toggle('hidden',lib)}));
+window.addEventListener('beforeunload',()=>objectUrls.forEach(URL.revokeObjectURL));
+</script>
+
+<script>
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(err => console.log('Service worker:', err)));
+}
+</script>
+</body>
+</html>
