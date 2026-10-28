@@ -61,14 +61,98 @@ main{padding:28px clamp(18px,4vw,48px);max-width:1500px;width:100%;margin:auto}.
 </div>
 <footer class="player">
   <div class="now"><div class="cover">♫</div><div class="nowtext"><strong id="nowTitle">Nicio melodie selectată</strong><span id="nowSub">Adaugă fișiere pentru a începe</span></div></div>
-  <div class="controls"><div class="controlbuttons"><button class="smallcontrol" id="prev" title="Piesa anterioară">|◀</button><button class="playbig" id="toggle" title="Redare/Pauză">▶</button><button class="smallcontrol" id="next" title="Piesa următoare">▶|</button></div><div class="progressrow"><span id="elapsed">0:00</span><input class="progress" id="seek" type="range" min="0" max="100" value="0" aria-label="Poziția melodiei"><span id="duration">0:00</span></div></div>
+  <div class="actions">
+  <button class="primary" id="chooseFiles">＋ Adaugă muzică</button>
+  <button class="secondary" id="playAll">▶ Redă prima piesă</button>
+  <button class="secondary" id="shuffle">🔀 Redare aleatorie</button>
+</div
   <div class="volume"><span>🔊</span><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volum"></div>
 </footer>
 <audio id="audio"></audio>
 <script>
 const $=id=>document.getElementById(id);
 const audio=$('audio'); let tracks=[]; let current=-1; let objectUrls=[];
-const fmt=s=>{if(!Number.isFinite(s))return'0:00';let m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+String(sec).padStart(2,'0')};
+const fmt=s=>{if(!Number.isFinite(s))return'0:00';let m=Math.floor(s/60),sec=Math.floor(s%60);return m+':'+String(sec).padStart(2,'0')};let dbPromise;
+
+function openPlaylistDB() {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve, reject) => {
+    const request = indexedDB.open('NeonBeatsDB', 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('songs')) {
+        db.createObjectStore('songs', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  return dbPromise;
+}
+
+async function savePlaylist() {
+  try {
+    const db = await openPlaylistDB();
+    const tx = db.transaction('songs', 'readwrite');
+    const store = tx.objectStore('songs');
+
+    store.clear();
+
+    tracks.forEach(track => {
+      if (track.file) {
+        store.add({
+          name: track.name,
+          file: track.file,
+          size: track.size
+        });
+      }
+    });
+
+    await new Promise((resolve, reject) => {
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.error('Nu am putut salva playlistul:', error);
+  }
+}
+
+async function loadPlaylist() {
+  try {
+    const db = await openPlaylistDB();
+
+    const songs = await new Promise((resolve, reject) => {
+      const tx = db.transaction('songs', 'readonly');
+      const request = tx.objectStore('songs').getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    for (const song of songs) {
+      const url = URL.createObjectURL(song.file);
+      objectUrls.push(url);
+      tracks.push({
+        name: song.name,
+        file: song.file,
+        url,
+        size: song.size
+      });
+    }
+
+    render();
+
+    if (current < 0 && tracks.length) {
+      selectTrack(0, false);
+    }
+  } catch (error) {
+    console.error('Nu am putut încărca playlistul:', error);
+  }
+}
 function render(){
  const q=$('search').value.trim().toLowerCase();
  const shown=tracks.map((t,i)=>({...t,i})).filter(t=>t.name.toLowerCase().includes(q));
@@ -77,7 +161,32 @@ function render(){
  $('tracks').innerHTML=shown.map(t=>`<div class="track"><div class="cover">♫</div><div><div class="trackname">${escapeHtml(t.name)}</div><div class="tracksub">${t.i===current?'În player': 'Fișier local'} · ${escapeHtml(t.size)}</div></div><button title="Redă ${escapeHtml(t.name)}" data-play="${t.i}">${t.i===current&&!audio.paused?'Ⅱ':'▶'}</button></div>`).join('');
 }
 function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function addFiles(files){for(const file of files){if(!file.type.startsWith('audio/')&&!/\.(mp3|wav|ogg|m4a|flac|aac|opus)$/i.test(file.name))continue;const url=URL.createObjectURL(file);objectUrls.push(url);tracks.push({name:file.name.replace(/\.[^.]+$/,''),url,size:file.size<1048576?(file.size/1024).toFixed(0)+' KB':(file.size/1048576).toFixed(1)+' MB'});}render();if(current<0&&tracks.length)selectTrack(0,false)}
+async function addFiles(files) {
+  for (const file of files) {
+    if (!file.type.startsWith('audio/') &&
+        !/\.(mp3|wav|ogg|m4a|flac|aac|opus)$/i.test(file.name)) continue;
+
+    const url = URL.createObjectURL(file);
+    objectUrls.push(url);
+
+    tracks.push({
+      name: file.name.replace(/\.[^.]+$/, ''),
+      url,
+      file,
+      size: file.size < 1048576
+        ? (file.size / 1024).toFixed(0) + ' KB'
+        : (file.size / 1048576).toFixed(1) + ' MB'
+    });
+  }
+
+  render();
+
+  if (current < 0 && tracks.length) {
+    selectTrack(0, false);
+  }
+
+  await savePlaylist();
+}selectTrack(0,false)}
 function selectTrack(i,autoplay=true){if(i<0||i>=tracks.length)return;current=i;audio.src=tracks[i].url;$('nowTitle').textContent=tracks[i].name;$('nowSub').textContent='Din biblioteca ta';$('toggle').textContent='▶';$('seek').value=0;$('elapsed').textContent='0:00';$('duration').textContent='0:00';render();if(autoplay)audio.play().then(updatePlayButton).catch(()=>updatePlayButton())}
 function updatePlayButton(){$('toggle').textContent=audio.paused?'▶':'Ⅱ';render()}
 function nextTrack(step){if(!tracks.length)return;let i=current<0?0:(current+step+tracks.length)%tracks.length;selectTrack(i,true)}
@@ -88,13 +197,21 @@ $('playAll').onclick=()=>{if(tracks.length)selectTrack(current<0?0:current,true)
 $('toggle').onclick=()=>{if(current<0){if(tracks.length)selectTrack(0,true);else $('fileInput').click();return}if(audio.paused)audio.play().then(updatePlayButton);else audio.pause();updatePlayButton()};
 $('prev').onclick=()=>{if(audio.currentTime>3)audio.currentTime=0;else nextTrack(-1)};
 $('next').onclick=()=>nextTrack(1);
-audio.addEventListener('play',updatePlayButton);audio.addEventListener('pause',updatePlayButton);
+$('shuffle').onclick=()=>{
+  if(tracks.length<2)return;
+  let i;
+  do {
+    i=Math.floor(Math.random()*tracks.length);
+  } while(i===current);
+  selectTrack(i,true);
+};audio.addEventListener('play',updatePlayButton);audio.addEventListener('pause',updatePlayButton);
 audio.addEventListener('loadedmetadata',()=>{$('duration').textContent=fmt(audio.duration)});
 audio.addEventListener('timeupdate',()=>{if(audio.duration){$('seek').value=audio.currentTime/audio.duration*100;$('elapsed').textContent=fmt(audio.currentTime)}});
 audio.addEventListener('ended',()=>nextTrack(1));
 $('seek').addEventListener('input',()=>{if(audio.duration)audio.currentTime=Number($('seek').value)/100*audio.duration});
 $('volume').addEventListener('input',()=>audio.volume=Number($('volume').value));audio.volume=.8;
 $('search').addEventListener('input',render);
+  loadPlaylist();
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-view]').forEach(n=>n.classList.toggle('active',n===b));const lib=b.dataset.view==='library';$('libraryView').classList.toggle('hidden',!lib);$('sourcesView').classList.toggle('hidden',lib)}));
 window.addEventListener('beforeunload',()=>objectUrls.forEach(URL.revokeObjectURL));
 </script>
